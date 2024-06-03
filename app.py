@@ -24,7 +24,8 @@ def authorize():
         'credentials.json', SCOPES)
     authorization_url, state = flow.authorization_url(
         access_type='offline',
-        include_granted_scopes='true')
+        include_granted_scopes='true',
+        redirect_uri=REDIRECT_URI)
     session['state'] = state
     return redirect(authorization_url)
 
