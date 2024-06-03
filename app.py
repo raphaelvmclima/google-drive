@@ -12,6 +12,7 @@ app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
+REDIRECT_URI = 'https://google-drive-produção-f8d2.up.railway.app/oauth2callback'
 
 @app.route('/')
 def index():
@@ -19,15 +20,22 @@ def index():
 
 @app.route('/authorize')
 def authorize():
-    flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-    authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true')
+    flow = InstalledAppFlow.from_client_secrets_file(
+        'credentials.json', SCOPES,
+        redirect_uri=REDIRECT_URI)
+    authorization_url, state = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true')
     session['state'] = state
     return redirect(authorization_url)
 
 @app.route('/oauth2callback')
 def oauth2callback():
     state = session['state']
-    flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES, state=state)
+    flow = InstalledAppFlow.from_client_secrets_file(
+        'credentials.json', SCOPES,
+        state=state,
+        redirect_uri=REDIRECT_URI)
     flow.fetch_token(authorization_response=request.url)
 
     creds = flow.credentials
@@ -42,7 +50,8 @@ def list_files():
     creds = Credentials(**session['credentials'])
     service = build('drive', 'v3', credentials=creds)
 
-    results = service.files().list(pageSize=10, fields="nextPageToken, files(id, name)").execute()
+    results = service.files().list(
+        pageSize=10, fields="nextPageToken, files(id, name)").execute()
     items = results.get('files', [])
 
     if not items:
