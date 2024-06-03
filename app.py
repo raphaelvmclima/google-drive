@@ -7,7 +7,7 @@ from flask import Flask, redirect, url_for, session, request, jsonify
 from flask_session import Session
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY')
+app.secret_key = os.environ.get('SECRET_KEY', 'default_secret_key')
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
@@ -25,7 +25,7 @@ def authorize():
     authorization_url, state = flow.authorization_url(
         access_type='offline',
         include_granted_scopes='true',
-        redirect_uri=REDIRECT_URI)
+        redirect_uri=REDIRECT_URI)  # Adicione redirect_uri aqui
     session['state'] = state
     return redirect(authorization_url)
 
@@ -33,7 +33,7 @@ def authorize():
 def oauth2callback():
     state = session['state']
     flow = InstalledAppFlow.from_client_secrets_file(
-        'credentials.json', SCOPES, state=state)
+        'credentials.json', SCOPES, state=state, redirect_uri=REDIRECT_URI)  # Adicione redirect_uri aqui
     flow.fetch_token(authorization_response=request.url)
 
     creds = flow.credentials
