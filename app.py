@@ -12,6 +12,7 @@ app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
+REDIRECT_URI = 'https://google-drive-production-f8d2.up.railway.app/oauth2callback'
 
 @app.route('/')
 def index():
@@ -21,20 +22,20 @@ def index():
 def authorize():
     flow = InstalledAppFlow.from_client_secrets_file(
         'credentials.json', SCOPES)
+    flow.redirect_uri = REDIRECT_URI  # Set the redirect_uri attribute
     authorization_url, state = flow.authorization_url(
         access_type='offline',
-        include_granted_scopes='true')
+        include_granted_scopes='true'
+    )
     session['state'] = state
     return redirect(authorization_url)
 
 @app.route('/oauth2callback')
 def oauth2callback():
-    state = session.get('state')
-    if not state:
-        return 'State not found in session', 400
-    
+    state = session['state']
     flow = InstalledAppFlow.from_client_secrets_file(
         'credentials.json', SCOPES, state=state)
+    flow.redirect_uri = REDIRECT_URI  # Set the redirect_uri attribute
     flow.fetch_token(authorization_response=request.url)
 
     creds = flow.credentials
